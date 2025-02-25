@@ -50,7 +50,7 @@
         }
     </style>
 </HEAD>
-
+<div id="heart-stream"></div>
 <BODY>
     <div class="sp-container">
         <div class="sp-content">
@@ -349,72 +349,98 @@ var Particle = (function() {
         /*
          * Putting it all together
          */
-        (function(canvas) {
-            var context = canvas.getContext('2d'),
-                particleRate = settings.particles.length / settings.particles.duration, // particles/sec (cho trái tim phức tạp)
-                time,
-                startTime;
-    
-            // Khởi tạo heartPath
-            buildHeartPath(canvas);
-    
-            function render() {
-                requestAnimationFrame(render);
-    
-                var newTime = new Date().getTime() / 1000;
-                if (!startTime) {
-                    startTime = newTime;
-                }
-                var elapsed = newTime - startTime;
-                var deltaTime = newTime - (time || newTime);
-                time = newTime;
-    
-                // Xoá canvas
-                context.clearRect(0, 0, canvas.width, canvas.height);
-    
-                // --- Phần hiệu ứng trái tim phức tạp (chính) ---
-                var amount = particleRate * deltaTime;
-                for (var i = 0; i < amount; i++) {
-                    var pos = pointOnHeart(Math.PI - 2 * Math.PI * Math.random());
-                    var dir = pos.clone().length(settings.particles.velocity);
-                    mainParticles.add(canvas.width / 2 + pos.x, canvas.height / 2 - pos.y, dir.x, -dir.y);
-                }
-                mainParticles.update(deltaTime);
-                mainParticles.draw(context, image);
-    
-                // --- Phần thêm icon trái tim nhỏ bên ngoài trái tim phức tạp ---
-                // Chỉ thực hiện khi đã qua thời gian emojiStartTime (giả sử chữ "Nguyễn Ngọc Tú Phụng" đã hiện lên)
-                if (elapsed >= emojiStartTime) {
-                    var outsideRate = 3; // số trái tim nhỏ/s mỗi giây
-                    var outsideAmount = outsideRate * deltaTime;
-                    for (var i = 0; i < outsideAmount; i++) {
-                        var x = Math.random() * canvas.width;
-                        var y = Math.random() * canvas.height;
-                        // Chỉ thêm nếu (x,y) nằm ngoài vùng trái tim phức tạp
-                        if (!context.isPointInPath(heartPath, x, y)) {
-                            outsideParticles.add(x, y, 0, 0);
-                        }
-                    }
-                }
-                outsideParticles.update(deltaTime);
-                outsideParticles.draw(context, smallHeartImage);
+         (function(canvas) {
+    var context = canvas.getContext('2d'),
+        particleRate = settings.particles.length / settings.particles.duration,
+        time,
+        startTime;
+
+    // Khởi tạo heartPath
+    buildHeartPath(canvas);
+
+    function render() {
+        requestAnimationFrame(render);
+
+        var newTime = new Date().getTime() / 1000;
+        if (!startTime) {
+            startTime = newTime;
+        }
+        var elapsed = newTime - startTime;
+        var deltaTime = newTime - (time || newTime);
+        time = newTime;
+
+        // Xoá canvas
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        // --- Chỉ tạo và vẽ hiệu ứng trái tim phức tạp sau 15 giây ---
+        if (elapsed >= 15) {
+            var amount = particleRate * deltaTime;
+            for (var i = 0; i < amount; i++) {
+                var pos = pointOnHeart(Math.PI - 2 * Math.PI * Math.random());
+                var dir = pos.clone().length(settings.particles.velocity);
+                mainParticles.add(canvas.width / 2 + pos.x, canvas.height / 2 - pos.y, dir.x, -dir.y);
             }
-    
-            // Xử lý thay đổi kích thước của canvas
-            function onResize() {
-                canvas.width = canvas.clientWidth;
-                canvas.height = canvas.clientHeight;
-                buildHeartPath(canvas);
+            mainParticles.update(deltaTime);
+            mainParticles.draw(context, image);
+        }
+
+        // --- Phần trái tim nhỏ bên ngoài ---
+        if (elapsed >= emojiStartTime) {
+            var outsideRate = 3; // số trái tim nhỏ/s mỗi giây
+            var outsideAmount = outsideRate * deltaTime;
+            for (var i = 0; i < outsideAmount; i++) {
+                var x = Math.random() * canvas.width;
+                var y = Math.random() * canvas.height;
+                if (!context.isPointInPath(heartPath, x, y)) {
+                    outsideParticles.add(x, y, 0, 0);
+                }
             }
-            window.onresize = onResize;
-    
-            setTimeout(function() {
-                onResize();
-                render();
-            }, 10);
-        })(document.getElementById('pinkboard'));
+        }
+        outsideParticles.update(deltaTime);
+        outsideParticles.draw(context, smallHeartImage);
+    }
+
+    function onResize() {
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+        buildHeartPath(canvas);
+    }
+    window.onresize = onResize;
+
+    setTimeout(function() {
+        onResize();
+        render();
+    }, 10);
+})(document.getElementById('pinkboard'));
+
     </script>
-    
+<script>
+    // Hàm tạo một emoji trái tim và thêm vào container
+    function spawnHeart() {
+      const heart = document.createElement('span');
+      heart.className = 'heart-emoji';
+      heart.textContent = '❤️';
+      // Đặt vị trí dọc ngẫu nhiên (0 đến chiều cao cửa sổ)
+      heart.style.top = Math.random() * window.innerHeight + 'px';
+      // (Tùy chọn) Ngẫu nhiên thời gian animation giữa 4s và 6s:
+      heart.style.animationDuration = (4 + Math.random() * 2) + 's';
+      
+      document.getElementById('heart-stream').appendChild(heart);
+      
+      // Sau khi animation kết thúc thì xóa emoji đi
+      heart.addEventListener('animationend', () => {
+        heart.remove();
+      });
+    }
+  
+    // Tạo interval spawn emoji mỗi 300ms (có thể điều chỉnh)
+    const heartInterval = setInterval(spawnHeart, 100);
+  
+    // Dừng tạo emoji sau 9 giây
+    setTimeout(() => {
+      clearInterval(heartInterval);
+    }, 9000);
+  </script>  
 
 
 </BODY>

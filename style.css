@@ -39,7 +39,7 @@ h1.main, p.demos {
 	height: 100%;
 	left: 0px;
 	top: 0px;
-	z-index: 1000;
+	z-index: 2;
 }
 .sp-container h2 {
 	position: absolute;
@@ -167,6 +167,33 @@ h1.main, p.demos {
 	color: #fff;
 }
 /**/
+/* CSS cho hiệu ứng trái tim chạy ngang */
+#heart-stream {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none; /* cho phép click xuyên qua */
+	z-index: 5; /* đảm bảo nằm trên các phần tử khác */
+  }
+  
+  .heart-emoji {
+	position: absolute;
+	font-size: 24px; /* có thể điều chỉnh kích thước */
+	animation: moveHeart 5s linear forwards;
+  }
+  
+  @keyframes moveHeart {
+	0% {
+	  transform: translateX(-50px);
+	  opacity: 1;
+	}
+	100% {
+	  transform: translateX(100vw);
+	  opacity: 0;
+	}
+  }
 
 @-webkit-keyframes blurFadeInOut {
 	0% {
